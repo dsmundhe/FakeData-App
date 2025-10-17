@@ -1,49 +1,54 @@
 import React, { useState } from "react";
-import { db, ref, set, remove } from "./firebase";
+import { db, ref, push, remove } from "./firebase";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const SendData = () => {
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState([]);
 
   const dataRef = ref(db, "secondsArray");
 
-  const updateFirebase = async (updatedValues) => {
+  // Send single value (push)
+  const sendValue = async (val) => {
+    setLoading(true);
     try {
-      await set(dataRef, updatedValues);
-      toast.success("✅ Data updated!");
+      await push(dataRef, `${val}s`);
+      toast.success(`✅ ${val}s pushed successfully!`);
     } catch (error) {
-      toast.error("❌ Error updating data");
+      toast.error("❌ Error pushing data");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const sendValue = async (val) => {
-    setLoading(true);
-    const updated = [...values, `${val}s`];
-    setValues(updated);
-    await updateFirebase(updated);
-    setLoading(false);
-  };
-
+  // Send 10 random values (push each)
   const sendMultiple = async () => {
     setLoading(true);
-    const generated = Array.from({ length: 10 }, () =>
-      `${(Math.random() * 5).toFixed(1)}s`
-    );
-    const updated = [...values, ...generated];
-    setValues(updated);
-    await updateFirebase(updated);
-    setLoading(false);
+    try {
+      const generated = Array.from({ length: 10 }, () =>
+        `${(Math.random() * 5).toFixed(1)}s`
+      );
+
+      for (let val of generated) {
+        await push(dataRef, val);
+      }
+
+      toast.success("✅ 10 random values pushed!");
+    } catch (error) {
+      toast.error("❌ Error pushing multiple values");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Delete all
   const deleteAll = async () => {
     if (!window.confirm("⚠️ Delete all values?")) return;
     setLoading(true);
     try {
       await remove(dataRef);
-      setValues([]);
       toast.info("🗑️ All data deleted!");
     } catch (error) {
       toast.error("❌ Error deleting data");
@@ -55,7 +60,7 @@ const SendData = () => {
   return (
     <div className="flex flex-col items-center mt-16">
       <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-        Send Array Data to Firebase
+        Push Data to Firebase
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-white p-6 rounded-2xl shadow-lg w-[340px]">
@@ -66,7 +71,7 @@ const SendData = () => {
             disabled={loading}
             className="bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all duration-200 disabled:opacity-60"
           >
-            Send {val}s
+            Push {val}s
           </button>
         ))}
 
@@ -75,7 +80,7 @@ const SendData = () => {
           disabled={loading}
           className="bg-green-600 text-white py-2 rounded-xl hover:bg-green-700 transition-all duration-200 disabled:opacity-60 col-span-2"
         >
-          Send 10 Random Values (1–5s)
+          Push 10 Random Values (1–5s)
         </button>
 
         <button
