@@ -4,10 +4,10 @@ import { getDatabase, ref, push, set, remove } from "firebase/database"; // <-- 
 
 const firebaseConfig = {
   apiKey: "AIzaSyBk5t9Qd9aXehaZzPXZYSORZI-MmndEZhU",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  authDomain: "neuroflexmat-237e7.firebaseapp.com",
   databaseURL: "https://neuroflexmat-237e7-default-rtdb.asia-southeast1.firebasedatabase.app/",
   projectId: "neuroflexmat-237e7",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  storageBucket: "neuroflexmat-237e7.appspot.com",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID",
 };

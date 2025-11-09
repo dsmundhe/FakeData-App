@@ -1,56 +1,59 @@
 import React, { useState } from "react";
-import { db, ref, push, remove } from "./firebase";
+import { db, ref, set, remove } from "./firebase";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const SendData = () => {
   const [loading, setLoading] = useState(false);
 
-  const dataRef = ref(db, "secondsArray");
+  const getTimestamp = () => {
+    return new Date().toISOString().replace("T", " ").substring(0, 19);
+  };
 
-  // Send single value (push)
-  const sendValue = async (val) => {
+  // ✅ Push entry to selected node
+  const pushToNode = async (nodeNumber) => {
     setLoading(true);
     try {
-      await push(dataRef, `${val}s`);
-      toast.success(`✅ ${val}s pushed successfully!`);
+      const entryId = "entry" + Math.floor(Math.random() * 9999);
+      const path = `reactionLogs/node${nodeNumber}/${entryId}`;
+
+      await set(ref(db, path), {
+        reaction_time_ms: Math.floor(Math.random() * 5000) + 500,
+        timestamp: getTimestamp(),
+      });
+
+      toast.success(`✅ Data added to node${nodeNumber}!`);
     } catch (error) {
-      toast.error("❌ Error pushing data");
       console.error(error);
+      toast.error("❌ Error sending data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Send 10 random values (push each)
-  const sendMultiple = async () => {
+  // ✅ DELETE ALL reaction logs
+  const deleteAllLogs = async () => {
+    if (!window.confirm("⚠️ Are you sure you want to delete ALL reaction logs?"))
+      return;
+
     setLoading(true);
     try {
-      const generated = Array.from({ length: 10 }, () =>
-        `${(Math.random() * 5).toFixed(1)}s`
-      );
+      await remove(ref(db, "reactionLogs"));
+      toast.info("🗑️ All reaction logs deleted!");
 
-      for (let val of generated) {
-        await push(dataRef, val);
-      }
+      // ✅ Optional: recreate empty node structure
+      const initialStructure = {
+        node1: { info: "ready" },
+        node2: { info: "ready" },
+        node3: { info: "ready" },
+        node4: { info: "ready" },
+        node5: { info: "ready" },
+      };
+      await set(ref(db, "reactionLogs"), initialStructure);
 
-      toast.success("✅ 10 random values pushed!");
+      toast.success("✅ Structure recreated automatically!");
     } catch (error) {
-      toast.error("❌ Error pushing multiple values");
       console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Delete all
-  const deleteAll = async () => {
-    if (!window.confirm("⚠️ Delete all values?")) return;
-    setLoading(true);
-    try {
-      await remove(dataRef);
-      toast.info("🗑️ All data deleted!");
-    } catch (error) {
       toast.error("❌ Error deleting data");
     } finally {
       setLoading(false);
@@ -60,35 +63,29 @@ const SendData = () => {
   return (
     <div className="flex flex-col items-center mt-16">
       <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-        Push Data to Firebase
+        Push Reaction Logs
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-white p-6 rounded-2xl shadow-lg w-[340px]">
-        {[1, 2, 3, 4].map((val) => (
+
+        {[1, 2, 3, 4, 5].map((node) => (
           <button
-            key={val}
-            onClick={() => sendValue(val)}
+            key={node}
+            onClick={() => pushToNode(node)}
             disabled={loading}
             className="bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition-all duration-200 disabled:opacity-60"
           >
-            Push {val}s
+            Send → Node {node}
           </button>
         ))}
 
+        {/* ✅ Delete All Button */}
         <button
-          onClick={sendMultiple}
-          disabled={loading}
-          className="bg-green-600 text-white py-2 rounded-xl hover:bg-green-700 transition-all duration-200 disabled:opacity-60 col-span-2"
-        >
-          Push 10 Random Values (1–5s)
-        </button>
-
-        <button
-          onClick={deleteAll}
+          onClick={deleteAllLogs}
           disabled={loading}
           className="bg-red-600 text-white py-2 rounded-xl hover:bg-red-700 transition-all duration-200 disabled:opacity-60 col-span-2"
         >
-          Delete All Data
+          Delete ALL Reaction Logs
         </button>
       </div>
 
